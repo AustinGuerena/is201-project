@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Pong Game</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>Austin Guerena's Resume</title>
+    <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
+    <!-- Font Awesome icons (free version)-->
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    <!-- Google fonts-->
+    <link href="https://fonts.googleapis.com/css?family=Saira+Extra+Condensed:500,700" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css?family=Muli:400,400i,800,800i" rel="stylesheet" type="text/css" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="../css/styles.css" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/scratch.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            flex-direction: column;
+        }
+        canvas {
+            background-color: #fff;
+            border: 2px solid #000;
+        }
+        #startButton, #resumeButton {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        #startButton {
+            display: block; /* Visible initially */
+        }
+        #resumeButton {
+            display: none; /* Hidden initially */
+        }
+    </style>
+</head>
+<body id="Mission">
+    <!-- Navigation-->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" id="sideNav">
+        <a class="navbar-brand js-scroll-trigger" href="#page-top">
+            <span class="d-block d-lg-none">Austin Guerena</span>
+            <span class="d-none d-lg-block"><img class="img-fluid img-profile rounded-circle mx-auto mb-4" src="../assets/img/profile pic.jpg" alt="..." /></span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link js-scroll-trigger" href="../index.html#about">About</a></li>
+                <li class="nav-item"><a class="nav-link js-scroll-trigger" href="../index.html#experience">Experience</a></li>
+                <li class="nav-item"><a class="nav-link js-scroll-trigger" href="../index.html#education">Education</a></li>
+                <li class="nav-item"><a class="nav-link js-scroll-trigger" href="../index.html#skills">Skills</a></li>
+                <li class="nav-item"><a class="nav-link js-scroll-trigger" href="../index.html#interests">Interests</a></li>
+                
+                <li class="nav-item"><a class="nav-link js-scroll-trigger" href="ai_game.html">AI Fruit Ninja Game</a></li>
+           
+                <li class="nav-item"><a class="nav-link js-scroll-trigger" href="mymission.html">My Mission</a></li>
+            </ul>
+        </div>
+    </nav>
+    <!-- Navbar and other content here -->
+
+    <!-- Game canvas -->
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    
+    <!-- Start and Resume buttons -->
+    <button id="startButton">Start Game</button>
+    <button id="resumeButton">Resume Game</button>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const startButton = document.getElementById("startButton");
+        const resumeButton = document.getElementById("resumeButton");
+
+        // Game variables
+        const paddleWidth = 10, paddleHeight = 100;
+        let player1Y = canvas.height / 2 - paddleHeight / 2;
+        let player2Y = canvas.height / 2 - paddleHeight / 2;
+        let puckX = canvas.width / 2, puckY = canvas.height / 2;
+        let puckSpeedX = 2, puckSpeedY = 2;
+        let player1Score = 0, player2Score = 0;
+        const paddleSpeed = 8;  // Slower paddle speed
+        let upArrowPressed = false, downArrowPressed = false, wKeyPressed = false, sKeyPressed = false;
+
+        let gamePaused = false;  // To track if the game is paused
+        let gameStarted = false;  // To track if the game has started
+
+        // Draw everything
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw paddles
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, player1Y, paddleWidth, paddleHeight);  // Player 1
+            ctx.fillRect(canvas.width - paddleWidth, player2Y, paddleWidth, paddleHeight);  // Player 2
+
+            // Draw puck
+            ctx.beginPath();
+            ctx.arc(puckX, puckY, 10, 0, Math.PI * 2);
+            ctx.fillStyle = "#000";
+            ctx.fill();
+            ctx.closePath();
+
+            // Draw scores
+            ctx.font = "20px Arial";
+            ctx.fillText("Player 1: " + player1Score, 10, 20);
+            ctx.fillText("Player 2: " + player2Score, canvas.width - 120, 20);
+
+            // Move puck
+            puckX += puckSpeedX;
+            puckY += puckSpeedY;
+
+            // Puck collision with top and bottom walls
+            if (puckY <= 10 || puckY >= canvas.height - 10) {
+                puckSpeedY = -puckSpeedY;
+            }
+
+            // Puck collision with paddles
+            if (puckX <= paddleWidth && puckY >= player1Y && puckY <= player1Y + paddleHeight) {
+                puckSpeedX = -puckSpeedX;
+            }
+            if (puckX >= canvas.width - paddleWidth - 10 && puckY >= player2Y && puckY <= player2Y + paddleHeight) {
+                puckSpeedX = -puckSpeedX;
+            }
+
+            // Score check
+            if (puckX <= 0) {
+                player2Score++;
+                resetPuck();
+                pauseGame();
+            } else if (puckX >= canvas.width) {
+                player1Score++;
+                resetPuck();
+                pauseGame();
+            }
+
+            // Move paddles based on player input
+            if (upArrowPressed && player2Y > 0) {
+                player2Y -= paddleSpeed;
+            }
+            if (downArrowPressed && player2Y < canvas.height - paddleHeight) {
+                player2Y += paddleSpeed;
+            }
+            if (wKeyPressed && player1Y > 0) {
+                player1Y -= paddleSpeed;
+            }
+            if (sKeyPressed && player1Y < canvas.height - paddleHeight) {
+                player1Y += paddleSpeed;
+            }
+        }
+
+        // Reset puck to the center
+        function resetPuck() {
+            puckX = canvas.width / 2;
+            puckY = canvas.height / 2;
+            puckSpeedX = (Math.random() > 0.5 ? 2 : -2);
+            puckSpeedY = (Math.random() > 0.5 ? 2 : -2);
+        }
+
+        // Pause the game and show resume button
+        function pauseGame() {
+            gamePaused = true;
+            resumeButton.style.display = "block";
+        }
+
+        // Resume the game when the button is clicked
+        resumeButton.addEventListener("click", function() {
+            gamePaused = false;
+            resumeButton.style.display = "none";  // Hide the resume button
+            gameLoop();  // Restart the game loop
+        });
+
+        // Start the game when the Start button is clicked
+        startButton.addEventListener("click", function() {
+            gameStarted = true;
+            startButton.style.display = "none"; // Hide start button
+            gameLoop();  // Start the game loop
+        });
+
+        // Key press events
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowUp") {
+                upArrowPressed = true;
+            }
+            if (event.key === "ArrowDown") {
+                downArrowPressed = true;
+            }
+            if (event.key === "w") {
+                wKeyPressed = true;
+            }
+            if (event.key === "s") {
+                sKeyPressed = true;
+            }
+        });
+
+        document.addEventListener("keyup", (event) => {
+            if (event.key === "ArrowUp") {
+                upArrowPressed = false;
+            }
+            if (event.key === "ArrowDown") {
+                downArrowPressed = false;
+            }
+            if (event.key === "w") {
+                wKeyPressed = false;
+            }
+            if (event.key === "s") {
+                sKeyPressed = false;
+            }
+        });
+
+        // Game loop
+        function gameLoop() {
+            if (gameStarted && !gamePaused) {
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+    </script>
+</body>
+</html>
